@@ -1,5 +1,5 @@
 /**
- * STM32F7 LED blink (HSE clock) Unit Test
+ * STM32F7 LED blink (HSI clock) Unit Test
  *
  * Copyright (c) 2015 Saint-Genest Gwenael <gwen@agilack.fr>
  *
@@ -28,21 +28,13 @@ static void hw_init_clock(void)
 {
 	u32 val;
 
-	/* Clear HSEON bit */
-	reg_clr(RCC_CR, 0x00010000);
-	/* Clear HSEBYP bit */
-	reg_clr(RCC_CR, 0x00040000);
-	/* Activate HSE (set HSEON) */
-	reg_set(RCC_CR, 0x00010000);
-	/* Wait until HSERDY bit set */
-	while( (reg_rd(RCC_CR) & 0x00020000) == 0)
-		;
-	
-	/* Select HSE as new clock source */
+	/* Select HSI as new clock source */
 	val  = reg_rd(RCC_CFGR);
-	val &= ~0x03;
-	val |=  0x01;
+	val &= ~0x03; /* 0x00 : HSI */
 	reg_wr(RCC_CFGR, val);
+	/* Wait until, clock source is modified */
+	while( (reg_rd(RCC_CFGR) & 0x0C) != (0x00 << 2))
+		;
 }
 
 static void hw_init_gpio(void)
@@ -65,7 +57,7 @@ static void hw_init_timer(void)
 	reg_set(RCC_APB1ENR, 0x01); /* Activate Timer2 */
 	/* Configure Timer2 */
 	reg_wr (TIM2_CR1, 0x0200); /* Input clock divided by 4 */
-	reg_wr (TIM2_ARR, 0x3680); /* Value used when reloaded */
+	reg_wr (TIM2_ARR, 0x8000); /* Value used when reloaded */
 	reg_wr (TIM2_PSC,   0x80); /* Prescaler       */
 	reg_set(TIM2_CR1,   0x08); /* Set OPM (one-pulse-mode) */
 }
